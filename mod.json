@@ -1,0 +1,17 @@
+{
+	"geode": "5.11.2",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "amiza.2.2-ship-indicator",
+	"name": "2.2 Ship Indicator",
+	"version": "v1.0.0",
+	"developer": "Amiza",
+	"description": "Indicates if a level uses 2.2's ship physics",
+	"dependencies": {
+		"geode.node-ids": ">=v1.23.3"
+	}
+}
