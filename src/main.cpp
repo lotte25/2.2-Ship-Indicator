@@ -2,6 +2,7 @@
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/LevelBrowserLayer.hpp>
+#include <Geode/modify/LevelCell.hpp>
 
 using namespace geode::prelude;
 
@@ -24,6 +25,18 @@ bool isFixEnabled(const GJGameLevel* level) {
     return fixgravitybug;
 }
 
+CircleButtonSprite* createIndicator() {
+    auto sprite = CCSprite::createWithSpriteFrameName("portal_04_extra_2_001.png");
+    auto indicator = CircleButtonSprite::create(
+        sprite, 
+        CircleBaseColor::Red, 
+        CircleBaseSize::Large
+    );
+    indicator->setID("indicator"_spr);
+    indicator->setScale(0.15f);
+
+    return indicator;
+}
 
 class $modify(LevelInfoLayer) {
     void addIndicator() {
@@ -32,19 +45,12 @@ class $modify(LevelInfoLayer) {
 
         // again, thanks ery 🙏
         const float copyIndicatorOffset = getChildByID("copy-indicator") ? 18.f : 0.f;
-		const float highObjIndictorOffset = getChildByID("high-object-indicator") ? 18.f : 0.f;
+		const float highObjIndicatorOffset = getChildByID("high-object-indicator") ? 18.f : 0.f;
 		const float creatorInfoMenuHalfWidth = creatorInfoMenu->getScaledContentSize().width / 2.f;
 
-        const float xPos = creatorInfoMenuHalfWidth + 9.f + copyIndicatorOffset + highObjIndictorOffset;
+        const float xPos = creatorInfoMenuHalfWidth + 9.f + copyIndicatorOffset + highObjIndicatorOffset;
 
-        auto sprite = CCSprite::createWithSpriteFrameName("portal_04_extra_2_001.png");
-        auto indicator = CircleButtonSprite::create(
-            sprite, 
-            CircleBaseColor::Red, 
-            CircleBaseSize::Large
-        );
-        indicator->setID("indicator"_spr);
-        indicator->setScale(0.15f);
+        auto indicator = createIndicator();
         indicator->setPosition(creatorInfoMenu->getPosition() + ccp(xPos, 8.6f));
 
         this->addChild(indicator);
@@ -68,7 +74,7 @@ class $modify(LevelInfoLayer) {
 };
 
 // I tried to come up with a good name but you can see the result... pls someone suggest something better 
-std::map<std::string, bool> levelsThatHaveTheFix;
+std::unordered_set<std::string> levelsThatHaveTheFix;
 
 class $modify(LevelBrowserLayer) {
     void loadLevelsFinished(CCArray* levels, char const* key, int type) {
@@ -92,8 +98,29 @@ class $modify(LevelBrowserLayer) {
 
             if (hasFixEnabled) {
                 geode::log::info("{} ({}) has fix enabled", level->m_levelName, level->m_levelID);
-                levelsThatHaveTheFix.insert({ std::to_string(level->m_levelID), hasFixEnabled });
+                levelsThatHaveTheFix.insert(std::to_string(level->m_levelID));
             }
         }
+    }
+};
+
+class $modify(LevelCell) {
+    void loadCustomLevelCell() {
+        LevelCell::loadCustomLevelCell();
+        if (!levelsThatHaveTheFix.contains(std::to_string(m_level->m_levelID))) return;
+
+        auto creatorName = m_mainMenu->getChildByID("creator-name");
+        if (creatorName == nullptr) return;
+
+        const float creatorNameHalfWidth = creatorName->getScaledContentWidth() / 2.f;
+        const float copyIndicatorOffset = m_mainLayer->getChildByID("copy-indicator") ? 18.f : 0.f;
+        const float highObjIndicatorOffset = m_mainLayer->getChildByID("high-object-indicator") ? 18.f : 0.f;
+
+        const float xPos = creatorNameHalfWidth + 9.f + copyIndicatorOffset + highObjIndicatorOffset;
+
+        auto indicator = createIndicator();
+        indicator->setPosition(creatorName->getPosition() + ccp(xPos, 8.6f));
+
+        m_mainLayer->addChild(indicator);
     }
 };
