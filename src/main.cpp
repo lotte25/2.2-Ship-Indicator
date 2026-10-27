@@ -33,7 +33,6 @@ CircleButtonSprite* createIndicator() {
         CircleBaseSize::Large
     );
     indicator->setID("indicator"_spr);
-    indicator->setScale(0.15f);
 
     return indicator;
 }
@@ -48,10 +47,12 @@ class $modify(LevelInfoLayer) {
 		const float highObjIndicatorOffset = getChildByID("high-object-indicator") ? 18.f : 0.f;
 		const float creatorInfoMenuHalfWidth = creatorInfoMenu->getScaledContentSize().width / 2.f;
 
-        const float xPos = creatorInfoMenuHalfWidth + 9.f + copyIndicatorOffset + highObjIndicatorOffset;
+        const float xPos = creatorInfoMenuHalfWidth + 6.f + copyIndicatorOffset + highObjIndicatorOffset;
 
         auto indicator = createIndicator();
+        indicator->setAnchorPoint({ 0.f, 0.5f });
         indicator->setPosition(creatorInfoMenu->getPosition() + ccp(xPos, 8.6f));
+        indicator->setScale(0.15f);
 
         this->addChild(indicator);
     }
@@ -112,14 +113,34 @@ class $modify(LevelCell) {
         auto creatorName = m_mainMenu->getChildByID("creator-name");
         if (creatorName == nullptr) return;
 
-        const float creatorNameHalfWidth = creatorName->getScaledContentWidth() / 2.f;
-        const float copyIndicatorOffset = m_mainLayer->getChildByID("copy-indicator") ? 18.f : 0.f;
-        const float highObjIndicatorOffset = m_mainLayer->getChildByID("high-object-indicator") ? 18.f : 0.f;
+        auto copyIndicator = m_mainLayer->getChildByID("copy-indicator");
+        auto highObjIndicator = m_mainLayer->getChildByID("high-object-indicator");
 
-        const float xPos = creatorNameHalfWidth + 9.f + copyIndicatorOffset + highObjIndicatorOffset;
-
+        
         auto indicator = createIndicator();
-        indicator->setPosition(creatorName->getPosition() + ccp(xPos, 8.6f));
+        indicator->setAnchorPoint({ 0.5f, 0.5f });
+
+        // https://github.com/Zilko/Level-Showcases/blob/main/src/main.cpp
+        float scale = 1.f;
+        CCPoint pos = { 0, 0 };
+
+        auto maxRight = highObjIndicator ? highObjIndicator : copyIndicator;
+        
+        if (copyIndicator || highObjIndicator) {
+            if (copyIndicator)
+                if (copyIndicator->getPositionX() > maxRight->getPositionX())
+                    maxRight = copyIndicator;
+
+            scale = maxRight->getContentWidth() * maxRight->getScale() / indicator->getContentWidth();
+            pos = maxRight->getPosition() + ccp(15, 0);
+        } else {
+            scale = getContentHeight() < 80 ? 0.8f : 1.f;
+            pos = m_mainMenu->getPosition() + creatorName->getPosition();
+            pos += ccp(creatorName->getContentWidth() / 2.f + 5, -1);
+        }
+
+        indicator->setPosition(pos);
+        indicator->setScale(scale);
 
         m_mainLayer->addChild(indicator);
     }
